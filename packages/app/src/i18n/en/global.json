@@ -9,11 +9,5 @@
       "invalid": "Image file is invalid",
       "size": "Image file size must be less than {{maxSize}}KB"
     }
-  },
-  "optional": "(optional)",
-  "copy": "Copy to clipboard",
-  "copied": "{{token}} contract address copied!",
-  "wallet": "Add to wallet",
-  "addFailed": "Failed to add {{token}} to your wallet",
-  "added": "{{token}} added to your wallet!"
+  }
 }
