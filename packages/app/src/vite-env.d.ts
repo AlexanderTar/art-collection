@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_PAYMASTER_PROXY_URL: string
 
   readonly VITE_ART_CERTIFICATE_ADDRESS: `0x${string}`
+  readonly VITE_COINBASE_MAGIC_SPEND_ADDRESS: `0x${string}`
 
   readonly VITEST?: 'true' | 'false'
   readonly CI?: 'true' | 'false'

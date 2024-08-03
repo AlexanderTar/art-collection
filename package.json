@@ -12,8 +12,5 @@
         "lint": "yarn workspaces run lint",
         "compile": "yarn workspace contracts compile",
         "deploy": "yarn workspace contracts deploy"
-    },
-    "engines": {
-        "node": ">=14.0.0"
     }
 }

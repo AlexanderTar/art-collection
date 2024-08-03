@@ -9,19 +9,23 @@ import { ValidateEnv } from '@julr/vite-plugin-validate-env'
 import { z } from 'zod'
 import path from 'path'
 
+// Define environment variables schema
+const envSchema = {
+  VITE_APP_NAME: z.string(),
+  VITE_WALLET_CONNECT_PROJECT_ID: z.string(),
+  VITE_GATEWAY_URL: z.string(),
+  VITE_PINATA_JWT: z.string(),
+  VITE_RPC_PROVIDER_URL: z.string(),
+  VITE_PAYMASTER_SERVICE_URL: z.string(),
+  VITE_ART_CERTIFICATE_ADDRESS: z.string(),
+  VITE_COINBASE_MAGIC_SPEND_ADDRESS: z.string(),
+}
+
 export default defineConfig(({ mode }) => ({
   plugins: [
     ValidateEnv({
       validator: 'zod',
-      schema: {
-        VITE_APP_NAME: z.string(),
-        VITE_WALLET_CONNECT_PROJECT_ID: z.string(),
-        VITE_GATEWAY_URL: z.string(),
-        VITE_PINATA_JWT: z.string(),
-        VITE_RPC_PROVIDER_URL: z.string(),
-        VITE_PAYMASTER_SERVICE_URL: z.string(),
-        VITE_ART_CERTIFICATE_ADDRESS: z.string(),
-      },
+      schema: envSchema,
     }),
     react(),
     vercel(),
@@ -36,7 +40,8 @@ export default defineConfig(({ mode }) => ({
             'eslint "./**/*.{js,cjs,ts,tsx}" --max-warnings 0 --report-unused-disable-directives',
         },
       }),
-  ],
+  ].filter(Boolean), // Remove falsy values from plugins array
+
   define: {
     __ENABLE_MSW_IN_PROD__: process.env.VERCEL !== undefined || process.env.IS_PREVIEW === 'true',
   },
