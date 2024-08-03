@@ -15,7 +15,7 @@ const CertificateDetails = () => {
   const onError = useShowError()
   const navigate = useNavigate()
 
-  const { data: certificate, isPending, isError, error } = useCertificate(tokenId)
+  const { data: certificate, isPending, isError } = useCertificate(tokenId)
 
   const { mutate: removeCertificate, isPending: isRemoving } = useRemoveCertificate()
 
@@ -34,9 +34,12 @@ const CertificateDetails = () => {
 
   useEffect(() => {
     if (isError) {
-      onError(error)
+      onError(t('certificate:details.error'))
+      navigate({
+        pathname: APP_ROUTES.index.to,
+      })
     }
-  }, [error, isError, onError])
+  }, [isError, onError, navigate, t])
 
   return (
     <div className="inset-0 z-10 flex items-center justify-center overflow-y-auto">
