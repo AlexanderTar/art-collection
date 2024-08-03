@@ -1,0 +1,19 @@
+{
+    "name": "art-collection",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "yarn workspace app dev",
+        "build": "yarn workspace app build",
+        "test": "yarn workspace contracts test",
+        "lint": "yarn workspaces run lint",
+        "compile": "yarn workspace contracts compile",
+        "deploy": "yarn workspace contracts deploy"
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    }
+}

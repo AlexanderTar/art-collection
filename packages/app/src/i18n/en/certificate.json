@@ -1,0 +1,35 @@
+{
+  "new": {
+    "title": "Mint New Certificate",
+    "submit": "Mint Certificate",
+    "minting": "Minting...",
+    "error": "Failed to mint certificate. Please try again later"
+  },
+  "burn": {
+    "submit": "Burn Certificate",
+    "burning": "Burning...",
+    "error": "Failed to burn certificate. Please try again later"
+  },
+  "my": {
+    "title": "My Certificates"
+  },
+  "metadata": {
+    "name": {
+      "label": "Name",
+      "placeholder": "Mona Lisa"
+    },
+    "artist": {
+      "label": "Artist",
+      "placeholder": "Leonardo Da Vinci"
+    },
+    "year": {
+      "label": "Year",
+      "placeholder": "1503"
+    },
+    "image": {
+      "label": "Photo",
+      "extra": "(max 1MB)",
+      "preview": "Artwork Photo Preview"
+    }
+  }
+}
