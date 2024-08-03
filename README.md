@@ -58,6 +58,9 @@ To interact with the smart contracts:
 2. Connect your Coinbase Smart Wallet to the application
 3. Thanks to gas sponsorship, you don't need ETH in your wallet to perform transactions
 
+Latest contract deployment:
+- Base Mainnet: [0x6a60c76247E89256BF8bb32b39B92DEb7bd3ebb4](https://basescan.org/address/0x6a60c76247E89256BF8bb32b39B92DEb7bd3ebb4)
+
 Smart contract deployment:
 1. Configure your environment variables in `packages/contracts/.env` (see `.env.example` for required variables)
 2. Run deployment script:
