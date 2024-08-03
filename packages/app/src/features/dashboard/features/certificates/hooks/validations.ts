@@ -28,9 +28,9 @@ export const useNewCertificateValidation = () => {
             message: t('global:validations.year'),
           }),
         image: z
-          .instanceof(FileList, { message: t('global:validations.avatar.invalid') })
+          .instanceof(FileList, { message: t('global:validations.image.invalid') })
           .refine((fileList) => fileList.length > 0, {
-            message: t('global:validations.avatar.invalid'),
+            message: t('global:validations.image.invalid'),
           })
           .refine((fileList) => sizeInKB(fileList[0]!.size) <= 1000, {
             message: t('global:validations.avatar.size', { maxSize: 1000 }),
