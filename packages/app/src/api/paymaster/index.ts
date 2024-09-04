@@ -1,7 +1,6 @@
-import { Address, createClient, Hex, http, decodeFunctionData } from 'viem'
+import { Address, Hex, http, decodeFunctionData } from 'viem'
 import { base } from 'viem/chains'
-import { ENTRYPOINT_ADDRESS_V06, UserOperation } from 'permissionless'
-import { paymasterActionsEip7677 } from 'permissionless/experimental'
+import { createPaymasterClient, UserOperation, entryPoint06Address } from 'viem/account-abstraction'
 import { smartWalletAbi, artCertificateAbi } from '@/client/abi/generated'
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -13,7 +12,7 @@ const willSponsor = async ({
 }: {
   chainId: number
   entrypoint: string
-  userOp: UserOperation<'v0.6'>
+  userOp: UserOperation<'0.6'>
 }) => {
   const env = process.env
   if (!env) return false
@@ -22,7 +21,7 @@ const willSponsor = async ({
   if (chainId !== base.id) return false
 
   // check entrypoint
-  if (entrypoint.toLowerCase() !== ENTRYPOINT_ADDRESS_V06.toLowerCase()) return false
+  if (entrypoint.toLowerCase() !== entryPoint06Address.toLowerCase()) return false
 
   try {
     // check that userOp.callData is making a call we want to sponsor
@@ -89,10 +88,9 @@ const willSponsor = async ({
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const paymasterService = process.env['VITE_PAYMASTER_SERVICE_URL']!
 
-  const paymasterClient = createClient({
-    chain: base,
+  const paymasterClient = createPaymasterClient({
     transport: http(paymasterService),
-  }).extend(paymasterActionsEip7677(ENTRYPOINT_ADDRESS_V06))
+  })
 
   const { method, params } = req.body as {
     method: string
@@ -105,13 +103,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (method === 'pm_getPaymasterStubData') {
     const result = await paymasterClient.getPaymasterStubData({
-      userOperation: userOp,
+      chainId: base.id,
+      entryPointAddress: entryPoint06Address,
+      ...userOp,
     })
 
     return res.json({ result })
   } else if (method === 'pm_getPaymasterData') {
     const result = await paymasterClient.getPaymasterData({
-      userOperation: userOp,
+      chainId: base.id,
+      entryPointAddress: entryPoint06Address,
+      ...userOp,
     })
     return res.json({ result })
   }
