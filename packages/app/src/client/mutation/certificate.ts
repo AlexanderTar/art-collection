@@ -1,10 +1,15 @@
 import { useMutation } from '@tanstack/react-query'
-import { useCapabilities } from 'wagmi/experimental'
-import { getCallsStatus, writeContracts } from '@wagmi/core/experimental'
-import { Config, useAccount, useConfig, usePublicClient } from 'wagmi'
+import { usePublicClient, useWalletClient } from 'wagmi'
 import { artCertificateAbi } from '../abi/generated'
-import { ContractFunctionParameters, parseEventLogs } from 'viem'
-import { useCallback, useMemo } from 'react'
+import { createPaymasterClient, entryPoint06Address } from 'viem/account-abstraction'
+import { ContractFunctionParameters, http, parseEventLogs } from 'viem'
+import { useCallback } from 'react'
+import { createPimlicoClient } from 'permissionless/clients/pimlico'
+import { createSmartAccountClient } from 'permissionless'
+import { toEcdsaKernelSmartAccount } from 'permissionless/accounts'
+import { base } from 'viem/chains'
+import { useWallets } from '@privy-io/react-auth'
+import { eip5792Actions } from 'viem/experimental'
 import { poll } from '@ethersproject/web'
 
 interface AddCertificateParams {
@@ -39,50 +44,140 @@ async function pinImageToIPFS(image: File) {
 }
 
 function useWriteContract() {
-  const account = useAccount()
-  const { data: availableCapabilities } = useCapabilities({
-    account: account.address,
-  })
-
-  const capabilities = useMemo(() => {
-    if (!availableCapabilities || !account.chainId) return {}
-    const capabilitiesForChain = availableCapabilities[account.chainId]
-    if (
-      capabilitiesForChain &&
-      capabilitiesForChain['paymasterService'] &&
-      capabilitiesForChain['paymasterService'].supported
-    ) {
-      return {
-        paymasterService: {
-          url: import.meta.env.VITE_PAYMASTER_PROXY_URL,
-        },
-      }
-    }
-    return {}
-  }, [availableCapabilities, account])
+  const { data: walletClient } = useWalletClient()
+  const { wallets } = useWallets()
+  const client = usePublicClient()
 
   const writeContract = useCallback(
-    async (config: Config, params: { contracts: ContractFunctionParameters[] }) => {
-      const id = await writeContracts(config, {
-        contracts: params.contracts,
-        capabilities,
-      })
-      return await poll<`0x${string}`>((async () => {
-        const status = await getCallsStatus(config, {
-          id,
+    async (params: ContractFunctionParameters) => {
+      if (!client || wallets.length === 0 || !walletClient) throw new Error('No active wallet')
+
+      const wallet = wallets[0]!!
+
+      if (wallet.walletClientType === 'privy') {
+        const account = await toEcdsaKernelSmartAccount({
+          client,
+          entryPoint: {
+            address: entryPoint06Address,
+            version: '0.6',
+          },
+          owners: [walletClient],
         })
-        if (!status.receipts?.length) return undefined
-        return status.receipts[0]?.transactionHash
-      }) as () => Promise<`0x${string}`>)
+
+        const pimlicoClient = createPimlicoClient({
+          transport: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
+          entryPoint: {
+            address: entryPoint06Address,
+            version: '0.6',
+          },
+        })
+
+        const paymasterClient = createPaymasterClient({
+          transport: http(import.meta.env.VITE_PAYMASTER_PROXY_URL),
+        })
+
+        const smartAccountClient = createSmartAccountClient({
+          account,
+          client,
+          chain: base,
+          bundlerTransport: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
+          paymaster: {
+            getPaymasterData: async (params) => {
+              const result = (await paymasterClient.getPaymasterData(params)) as {
+                paymasterAndData: `0x${string}`
+              }
+              return {
+                paymasterAndData: result.paymasterAndData,
+              }
+            },
+            getPaymasterStubData: async (params) => {
+              const result = (await paymasterClient.getPaymasterStubData(params)) as {
+                paymasterAndData: `0x${string}`
+              }
+              return {
+                paymasterAndData: result.paymasterAndData,
+              }
+            },
+          },
+          userOperation: {
+            estimateFeesPerGas: async () => {
+              return (await pimlicoClient.getUserOperationGasPrice()).fast
+            },
+          },
+        })
+
+        const userOperation = await smartAccountClient.prepareUserOperation({
+          calls: [
+            {
+              abi: params.abi,
+              to: params.address,
+              functionName: params.functionName,
+              args: params.args,
+            },
+          ],
+        })
+
+        return await smartAccountClient.sendTransaction({
+          calls: [
+            {
+              abi: params.abi,
+              to: params.address,
+              functionName: params.functionName,
+              args: params.args,
+            },
+          ],
+          preVerificationGas: userOperation.preVerificationGas * 2n,
+          verificationGasLimit: userOperation.verificationGasLimit * 2n,
+          maxFeePerGas: userOperation.maxFeePerGas,
+          maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
+        })
+      } else if (wallet.walletClientType === 'coinbase_wallet') {
+        const wallet = walletClient.extend(eip5792Actions())
+        const capabilities = await wallet.getCapabilities()
+        const capabilitiesForChain = capabilities[base.id]
+
+        if (
+          !capabilitiesForChain ||
+          !capabilitiesForChain['paymasterService'] ||
+          !capabilitiesForChain['paymasterService'].supported
+        ) {
+          return walletClient.writeContract(params)
+        }
+
+        const id = await wallet.sendCalls({
+          account: wallet.account,
+          calls: [
+            {
+              abi: params.abi,
+              to: params.address,
+              functionName: params.functionName,
+              args: params.args,
+            },
+          ],
+          capabilities: {
+            paymasterService: {
+              url: import.meta.env.VITE_PAYMASTER_PROXY_URL,
+            },
+          },
+        })
+        return poll<`0x${string}`>((async () => {
+          const status = await wallet.getCallsStatus({
+            id,
+          })
+          if (!status.receipts?.length) return undefined
+          return status.receipts[0]?.transactionHash
+        }) as () => Promise<`0x${string}`>)
+      } else {
+        return walletClient.writeContract(params)
+      }
     },
-    [capabilities],
+    [client, walletClient, wallets],
   )
 
   return { writeContract }
 }
 
 export function useAddCertificate() {
-  const config = useConfig()
   const client = usePublicClient()
   const { writeContract } = useWriteContract()
 
@@ -107,15 +202,11 @@ export function useAddCertificate() {
       const base64Metadata = btoa(jsonMetadata)
       const tokenURI = `data:application/json;base64,${base64Metadata}`
 
-      const tx = await writeContract(config, {
-        contracts: [
-          {
-            address: import.meta.env.VITE_ART_CERTIFICATE_ADDRESS,
-            abi: artCertificateAbi,
-            functionName: 'mint',
-            args: [tokenURI],
-          },
-        ],
+      const tx = await writeContract({
+        address: import.meta.env.VITE_ART_CERTIFICATE_ADDRESS,
+        abi: artCertificateAbi,
+        functionName: 'mint',
+        args: [tokenURI],
       })
 
       const receipt = await client.waitForTransactionReceipt({ hash: tx })
@@ -138,23 +229,15 @@ export function useAddCertificate() {
 }
 
 export const useRemoveCertificate = () => {
-  const config = useConfig()
-  const client = usePublicClient()
   const { writeContract } = useWriteContract()
 
   return useMutation({
     mutationFn: async (tokenId: number) => {
-      if (!client) throw new Error('No client')
-
-      await writeContract(config, {
-        contracts: [
-          {
-            address: import.meta.env.VITE_ART_CERTIFICATE_ADDRESS,
-            abi: artCertificateAbi,
-            functionName: 'burn',
-            args: [BigInt(tokenId)],
-          },
-        ],
+      await writeContract({
+        address: import.meta.env.VITE_ART_CERTIFICATE_ADDRESS,
+        abi: artCertificateAbi,
+        functionName: 'burn',
+        args: [BigInt(tokenId)],
       })
     },
   })

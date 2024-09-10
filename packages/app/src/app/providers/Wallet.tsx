@@ -1,5 +1,8 @@
 import { type ReactNode } from 'react'
 
+import { addRpcUrlOverrideToChain, PrivyProvider } from '@privy-io/react-auth'
+import { WagmiProvider } from '@privy-io/wagmi'
+
 import {
   getDefaultConfig,
   RainbowKitProvider,
@@ -7,7 +10,7 @@ import {
   cssStringFromTheme,
 } from '@rainbow-me/rainbowkit'
 import { coinbaseWallet } from '@rainbow-me/rainbowkit/wallets'
-import { WagmiProvider, http } from 'wagmi'
+import { http } from 'wagmi'
 import { base } from 'wagmi/chains'
 
 interface Props {
@@ -15,9 +18,6 @@ interface Props {
 }
 
 const WalletProvider = ({ children }: Props) => {
-  // Enable Coinbase Smart Wallet
-  coinbaseWallet.preference = 'all'
-
   const config = getDefaultConfig({
     appName: import.meta.env.VITE_APP_NAME,
     projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID,
@@ -41,20 +41,40 @@ const WalletProvider = ({ children }: Props) => {
   })
 
   return (
-    <WagmiProvider config={config}>
-      <RainbowKitProvider modalSize="compact" locale="en" theme={null}>
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
+    <PrivyProvider
+      appId={import.meta.env.VITE_PRIVY_APP_ID}
+      config={{
+        appearance: {
+          theme: 'dark',
+          accentColor: '#0051FF',
+        },
+        externalWallets: {
+          coinbaseWallet: {
+            connectionOptions: 'all',
+          },
+        },
+        embeddedWallets: {
+          createOnLogin: 'users-without-wallets',
+        },
+
+        supportedChains: [addRpcUrlOverrideToChain(base, import.meta.env.VITE_RPC_PROVIDER_URL)],
+      }}
+    >
+      <WagmiProvider config={config}>
+        <RainbowKitProvider modalSize="compact" locale="en" theme={null}>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
               :root {
                 ${cssStringFromTheme({ ...dark, radii: { ...dark.radii, connectButton: '9999px', menuButton: '9999px' } })}
               }
             `,
-          }}
-        />
-        {children}
-      </RainbowKitProvider>
-    </WagmiProvider>
+            }}
+          />
+          {children}
+        </RainbowKitProvider>
+      </WagmiProvider>
+    </PrivyProvider>
   )
 }
 

@@ -42,7 +42,7 @@ const MyCertificates = () => {
           </div>
         )}
         {!isLoading && (!certificates || certificates.length === 0) && (
-          <ShrugIcon className="fill-muted-foreground h-72 w-72" />
+          <ShrugIcon className="h-72 w-72 fill-muted-foreground" />
         )}
       </aside>
     </div>

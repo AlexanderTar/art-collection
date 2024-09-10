@@ -92,9 +92,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     transport: http(paymasterService),
   })
 
-  const { method, params } = req.body as {
+  const { method, params, id, jsonrpc } = req.body as {
     method: string
     params: any[]
+    id: number
+    jsonrpc: string
   }
   const [userOp, entrypoint, chainId] = params
   if (!willSponsor({ chainId: parseInt(chainId), entrypoint, userOp })) {
@@ -108,14 +110,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...userOp,
     })
 
-    return res.json({ result })
+    return res.json({ id, jsonrpc, result })
   } else if (method === 'pm_getPaymasterData') {
     const result = await paymasterClient.getPaymasterData({
       chainId: base.id,
       entryPointAddress: entryPoint06Address,
       ...userOp,
     })
-    return res.json({ result })
+    return res.json({ id, jsonrpc, result })
   }
   return res.json({ error: 'Method not found' })
 }

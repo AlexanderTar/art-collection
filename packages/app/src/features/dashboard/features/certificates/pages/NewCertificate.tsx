@@ -155,7 +155,7 @@ const NewCertificate = () => {
                           {previewImage && (
                             <div className="flex flex-col items-center">
                               <img
-                                className="shadow-primary aspect-square h-32 w-32 rounded-lg object-cover shadow-lg"
+                                className="aspect-square h-32 w-32 rounded-lg object-cover shadow-lg shadow-primary"
                                 src={previewImage}
                                 alt={t('certificate:metadata.image.preview')}
                               />

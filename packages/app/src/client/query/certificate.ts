@@ -1,8 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { readContract, readContracts } from '@wagmi/core'
-import { useAccount, useConfig } from 'wagmi'
+import { useConfig, usePublicClient, useWalletClient } from 'wagmi'
 import { artCertificateAbi } from '../abi/generated'
 import { Certificate } from '../model/certificate'
+import { toEcdsaKernelSmartAccount } from 'permissionless/accounts'
+import { entryPoint06Address } from 'viem/account-abstraction'
+import { useWallets } from '@privy-io/react-auth'
+import { useAuth } from '@/common/auth'
 
 function parseCertificateData(tokenURI: string, tokenId: number): Certificate | undefined {
   if (!tokenURI.startsWith('data:application/json;base64,')) {
@@ -38,19 +42,38 @@ function parseCertificateData(tokenURI: string, tokenId: number): Certificate | 
 }
 
 export function useOwnerCertificates() {
-  const { address } = useAccount()
+  const { data: walletClient } = useWalletClient()
+  const { wallets } = useWallets()
+  const client = usePublicClient()
   const config = useConfig()
+  const { isLoggedIn } = useAuth()
 
   return useQuery({
-    queryKey: ['ownerCertificates', { owner: address }],
+    queryKey: ['ownerCertificates', { owner: walletClient?.account.address, isLoggedIn }],
+    enabled: isLoggedIn,
     queryFn: async () => {
-      if (!address) return []
+      if (!client || wallets.length === 0 || !walletClient) return []
+      const wallet = wallets[0]!!
+      let account
+
+      if (wallet.walletClientType === 'privy') {
+        account = await toEcdsaKernelSmartAccount({
+          client,
+          entryPoint: {
+            address: entryPoint06Address,
+            version: '0.6',
+          },
+          owners: [walletClient],
+        })
+      } else {
+        account = walletClient.account
+      }
 
       const tokenIds = await readContract(config, {
         address: import.meta.env.VITE_ART_CERTIFICATE_ADDRESS,
         abi: artCertificateAbi,
         functionName: 'tokensOf',
-        args: [address],
+        args: [account.address],
       })
 
       const requests = tokenIds.map((tokenId) => {
