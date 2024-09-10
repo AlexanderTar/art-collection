@@ -58,14 +58,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     )
   } else if (method === 'eth_getUserOperationReceipt') {
     const [hash] = params
-    const result = await bundlerClient.getUserOperationReceipt({
-      hash,
-    })
-    return res.send(
-      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
-        typeof value === 'bigint' ? value.toString() : value,
-      ),
-    )
+    try {
+      const result = await bundlerClient.getUserOperationReceipt({
+        hash,
+      })
+      return res.send(
+        JSON.stringify({ id, jsonrpc, result }, (_, value) =>
+          typeof value === 'bigint' ? value.toString() : value,
+        ),
+      )
+    } catch (e) {
+      return res.json({ id, jsonrpc, result: null })
+    }
   }
-  return res.send(JSON.stringify({ id, jsonrpc, error: 'Method not found' }))
+  return res.json({ error: 'Method not found' })
 }
