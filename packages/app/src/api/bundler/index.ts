@@ -29,27 +29,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (method === 'pimlico_getUserOperationGasPrice') {
     const result = await pimlicoClient.getUserOperationGasPrice()
 
-    return res.json({ id, jsonrpc, result })
+    return res.send(
+      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    )
   } else if (method === 'eth_estimateUserOperationGas') {
     const [userOp, entrypoint] = params
     const result = await bundlerClient.estimateUserOperationGas({
       entryPointAddress: entrypoint,
       ...userOp,
     })
-    return res.json({ id, jsonrpc, result })
+    return res.send(
+      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    )
   } else if (method === 'eth_sendUserOperation') {
     const [userOp, entrypoint] = params
     const result = await bundlerClient.sendUserOperation({
       entryPointAddress: entrypoint,
       ...userOp,
     })
-    return res.json({ id, jsonrpc, result })
+    return res.send(
+      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    )
   } else if (method === 'eth_getUserOperationReceipt') {
     const [hash] = params
     const result = await bundlerClient.getUserOperationReceipt({
       hash,
     })
-    return res.json({ id, jsonrpc, result })
+    return res.send(
+      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    )
   }
-  return res.json({ error: 'Method not found' })
+  return res.send(JSON.stringify({ id, jsonrpc, error: 'Method not found' }))
 }
