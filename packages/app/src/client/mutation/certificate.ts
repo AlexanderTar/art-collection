@@ -1,12 +1,8 @@
 import { useMutation } from '@tanstack/react-query'
 import { usePublicClient, useWalletClient } from 'wagmi'
 import { artCertificateAbi } from '../abi/generated'
-import { createPaymasterClient, entryPoint06Address } from 'viem/account-abstraction'
-import { ContractFunctionParameters, http, parseEventLogs } from 'viem'
+import { ContractFunctionParameters, parseEventLogs } from 'viem'
 import { useCallback } from 'react'
-import { createPimlicoClient } from 'permissionless/clients/pimlico'
-import { createSmartAccountClient } from 'permissionless'
-import { toEcdsaKernelSmartAccount } from 'permissionless/accounts'
 import { base } from 'viem/chains'
 import { useWallets } from '@privy-io/react-auth'
 import { eip5792Actions } from 'viem/experimental'
@@ -54,84 +50,7 @@ function useWriteContract() {
 
       const wallet = wallets[0]!!
 
-      if (wallet.walletClientType === 'privy') {
-        const account = await toEcdsaKernelSmartAccount({
-          client,
-          entryPoint: {
-            address: entryPoint06Address,
-            version: '0.6',
-          },
-          owners: [walletClient],
-        })
-
-        const pimlicoClient = createPimlicoClient({
-          transport: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
-          entryPoint: {
-            address: entryPoint06Address,
-            version: '0.6',
-          },
-        })
-
-        const paymasterClient = createPaymasterClient({
-          transport: http(import.meta.env.VITE_PAYMASTER_PROXY_URL),
-        })
-
-        const smartAccountClient = createSmartAccountClient({
-          account,
-          client,
-          chain: base,
-          bundlerTransport: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
-          paymaster: {
-            getPaymasterData: async (params) => {
-              const result = (await paymasterClient.getPaymasterData(params)) as {
-                paymasterAndData: `0x${string}`
-              }
-              return {
-                paymasterAndData: result.paymasterAndData,
-              }
-            },
-            getPaymasterStubData: async (params) => {
-              const result = (await paymasterClient.getPaymasterStubData(params)) as {
-                paymasterAndData: `0x${string}`
-              }
-              return {
-                paymasterAndData: result.paymasterAndData,
-              }
-            },
-          },
-          userOperation: {
-            estimateFeesPerGas: async () => {
-              return (await pimlicoClient.getUserOperationGasPrice()).fast
-            },
-          },
-        })
-
-        const userOperation = await smartAccountClient.prepareUserOperation({
-          calls: [
-            {
-              abi: params.abi,
-              to: params.address,
-              functionName: params.functionName,
-              args: params.args,
-            },
-          ],
-        })
-
-        return await smartAccountClient.sendTransaction({
-          calls: [
-            {
-              abi: params.abi,
-              to: params.address,
-              functionName: params.functionName,
-              args: params.args,
-            },
-          ],
-          preVerificationGas: userOperation.preVerificationGas * 2n,
-          verificationGasLimit: userOperation.verificationGasLimit * 2n,
-          maxFeePerGas: userOperation.maxFeePerGas,
-          maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
-        })
-      } else if (wallet.walletClientType === 'coinbase_wallet') {
+      if (wallet.walletClientType === 'coinbase_wallet') {
         const wallet = walletClient.extend(eip5792Actions())
         const capabilities = await wallet.getCapabilities()
         const capabilitiesForChain = capabilities[base.id]

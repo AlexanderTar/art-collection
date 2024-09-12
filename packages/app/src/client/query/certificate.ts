@@ -1,11 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { readContract, readContracts } from '@wagmi/core'
-import { useConfig, usePublicClient, useWalletClient } from 'wagmi'
+import { useAccount, useConfig, usePublicClient } from 'wagmi'
 import { artCertificateAbi } from '../abi/generated'
 import { Certificate } from '../model/certificate'
-import { toEcdsaKernelSmartAccount } from 'permissionless/accounts'
-import { entryPoint06Address } from 'viem/account-abstraction'
-import { useWallets } from '@privy-io/react-auth'
 import { useAuth } from '@/common/auth'
 
 function parseCertificateData(tokenURI: string, tokenId: number): Certificate | undefined {
@@ -42,32 +39,16 @@ function parseCertificateData(tokenURI: string, tokenId: number): Certificate | 
 }
 
 export function useOwnerCertificates() {
-  const { data: walletClient } = useWalletClient()
-  const { wallets } = useWallets()
+  const account = useAccount()
   const client = usePublicClient()
   const config = useConfig()
   const { isLoggedIn } = useAuth()
 
   return useQuery({
-    queryKey: ['ownerCertificates', { owner: walletClient?.account.address, isLoggedIn }],
+    queryKey: ['ownerCertificates', { owner: account.address, isLoggedIn }],
     enabled: isLoggedIn,
     queryFn: async () => {
-      if (!client || wallets.length === 0 || !walletClient) return []
-      const wallet = wallets[0]!!
-      let account
-
-      if (wallet.walletClientType === 'privy') {
-        account = await toEcdsaKernelSmartAccount({
-          client,
-          entryPoint: {
-            address: entryPoint06Address,
-            version: '0.6',
-          },
-          owners: [walletClient],
-        })
-      } else {
-        account = walletClient.account
-      }
+      if (!client || !account.address) return []
 
       const tokenIds = await readContract(config, {
         address: import.meta.env.VITE_ART_CERTIFICATE_ADDRESS,
