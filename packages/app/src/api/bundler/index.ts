@@ -198,14 +198,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ id, jsonrpc, result: null })
     }
   } else {
-    const result = await bundlerClient.transport.request({
-      method,
-      params,
+    const response = await fetch(bundlerService, {
+      method: req.method,
+      body: JSON.stringify(req.body),
     })
-    return res.send(
-      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
-        typeof value === 'bigint' ? value.toString() : value,
-      ),
-    )
+    return res.json(await response.json())
   }
 }
