@@ -20,12 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     transport: http(bundlerService),
   })
 
-  const { method, params, id, jsonrpc } = req.body as {
-    method: string
-    params: any[]
-    id: number
-    jsonrpc: string
-  }
+  const { method, params, id, jsonrpc } = req.body
   if (method === 'pimlico_getUserOperationGasPrice') {
     const result = await pimlicoClient.getUserOperationGasPrice()
 
@@ -70,6 +65,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (e) {
       return res.json({ id, jsonrpc, result: null })
     }
+  } else {
+    const result = await bundlerClient.request({
+      method,
+      params,
+    })
+    return res.send(
+      JSON.stringify({ id, jsonrpc, result }, (_, value) =>
+        typeof value === 'bigint' ? value.toString() : value,
+      ),
+    )
   }
-  return res.json({ error: 'Method not found' })
 }
