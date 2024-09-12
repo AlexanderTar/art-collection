@@ -105,16 +105,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   })
 
+  const client = createPublicClient({
+    chain: base,
+    transport: http(bundlerService),
+  })
+
   const paymasterClient = createPaymasterClient({
     transport: http(bundlerService),
   })
 
   const bundlerClient = createBundlerClient({
-    transport: http(bundlerService),
-  })
-
-  const client = createPublicClient({
-    chain: base,
+    client,
     transport: http(bundlerService),
   })
 
@@ -197,7 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ id, jsonrpc, result: null })
     }
   } else {
-    const result = await client.request({
+    const result = await bundlerClient.transport.request({
       method,
       params,
     })
