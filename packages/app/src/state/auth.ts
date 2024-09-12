@@ -1,4 +1,4 @@
-import { usePrivy, useLinkWithSiwe, useWallets } from '@privy-io/react-auth'
+import { usePrivy, useLinkWithSiwe, useWallets, User } from '@privy-io/react-auth'
 import { useEmbeddedSmartAccountConnector } from '@privy-io/wagmi'
 import { toEcdsaKernelSmartAccount } from 'permissionless/accounts'
 import { useCallback, useMemo } from 'react'
@@ -13,10 +13,12 @@ import { createPimlicoClient } from 'permissionless/clients/pimlico'
 interface AuthState {
   isLoggedIn: boolean
   login: () => void
+  ready: boolean
+  user: User | null
 }
 
 export const useAuthState = () => {
-  const { login, logout } = usePrivy()
+  const { login, logout, user, ready } = usePrivy()
   const { generateSiweMessage, linkWithSiwe } = useLinkWithSiwe()
   const { wallets } = useWallets()
   const account = useAccount()
@@ -120,7 +122,8 @@ export const useAuthState = () => {
   })
 
   return useMemo(
-    () => [{ isLoggedIn: account?.address !== undefined, login } as AuthState] as const,
-    [account, login],
+    () =>
+      [{ isLoggedIn: account?.address !== undefined, login, ready, user } as AuthState] as const,
+    [account, login, ready, user],
   )
 }

@@ -1,4 +1,5 @@
 {
   "connect": "Connect",
+  "disconnect": "Disconnect",
   "create": "Create Wallet"
 }
