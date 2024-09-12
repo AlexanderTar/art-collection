@@ -8,7 +8,7 @@ import {
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createPimlicoClient } from 'permissionless/clients/pimlico'
 
-import { Address, Hex, http, decodeFunctionData } from 'viem'
+import { Address, Hex, http, decodeFunctionData, createPublicClient } from 'viem'
 import { base } from 'viem/chains'
 
 import { smartWalletAbi, artCertificateAbi } from '@/client/abi/generated'
@@ -113,6 +113,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     transport: http(bundlerService),
   })
 
+  const client = createPublicClient({
+    chain: base,
+    transport: http(bundlerService),
+  })
+
   const { method, params, id, jsonrpc } = req.body
   if (method === 'pimlico_getUserOperationGasPrice') {
     const result = await pimlicoClient.getUserOperationGasPrice()
@@ -192,7 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json({ id, jsonrpc, result: null })
     }
   } else {
-    const result = await bundlerClient.request({
+    const result = await client.request({
       method,
       params,
     })
