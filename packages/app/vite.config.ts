@@ -13,10 +13,12 @@ import path from 'path'
 const envSchema = {
   VITE_APP_NAME: z.string(),
   VITE_WALLET_CONNECT_PROJECT_ID: z.string(),
-  VITE_GATEWAY_URL: z.string(),
+  VITE_PRIVY_APP_ID: z.string(),
   VITE_PINATA_JWT: z.string(),
-  VITE_RPC_PROVIDER_URL: z.string(),
-  VITE_PAYMASTER_SERVICE_URL: z.string(),
+  VITE_GATEWAY_URL: z.string(),
+  VITE_BUNDLER_SERVICE_URL: z.string(),
+  VITE_PIMLICO_RPC_URL: z.string(),
+  VITE_BUNDLER_PROXY_URL: z.string(),
   VITE_ART_CERTIFICATE_ADDRESS: z.string(),
   VITE_COINBASE_MAGIC_SPEND_ADDRESS: z.string(),
 }
@@ -63,11 +65,6 @@ export default defineConfig(({ mode }) => ({
   },
   vercel: {
     additionalEndpoints: [
-      {
-        source: './src/api/paymaster/index.ts',
-        destination: '/api/paymaster',
-        addRoute: true,
-      },
       {
         source: './src/api/bundler/index.ts',
         destination: '/api/bundler',

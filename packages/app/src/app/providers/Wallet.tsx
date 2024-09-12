@@ -14,7 +14,7 @@ const WalletProvider = ({ children }: Props) => {
   const config = createConfig({
     chains: [base, mainnet],
     transports: {
-      [base.id]: http(import.meta.env.VITE_RPC_PROVIDER_URL),
+      [base.id]: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
       [mainnet.id]: http(),
     },
   })
@@ -36,8 +36,8 @@ const WalletProvider = ({ children }: Props) => {
           createOnLogin: 'users-without-wallets',
         },
 
-        supportedChains: [addRpcUrlOverrideToChain(base, import.meta.env.VITE_RPC_PROVIDER_URL)],
-        defaultChain: addRpcUrlOverrideToChain(base, import.meta.env.VITE_RPC_PROVIDER_URL),
+        supportedChains: [addRpcUrlOverrideToChain(base, import.meta.env.VITE_BUNDLER_PROXY_URL)],
+        defaultChain: addRpcUrlOverrideToChain(base, import.meta.env.VITE_BUNDLER_PROXY_URL),
       }}
     >
       <WagmiProvider config={config}>{children}</WagmiProvider>

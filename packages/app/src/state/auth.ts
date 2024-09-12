@@ -51,7 +51,7 @@ export const useAuthState = () => {
     getSmartAccountFromSigner: async ({ signer }: { signer: EIP1193Provider }) => {
       const client = createPublicClient({
         chain: base,
-        transport: http(import.meta.env.VITE_RPC_PROVIDER_URL),
+        transport: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
       })
       const account = await toEcdsaKernelSmartAccount({
         client,
@@ -76,7 +76,7 @@ export const useAuthState = () => {
       })
 
       const paymasterClient = createPaymasterClient({
-        transport: http(import.meta.env.VITE_PAYMASTER_PROXY_URL),
+        transport: http(import.meta.env.VITE_BUNDLER_PROXY_URL),
       })
 
       const smartAccountClient = createSmartAccountClient({

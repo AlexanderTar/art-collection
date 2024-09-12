@@ -6,9 +6,6 @@ interface ImportMetaEnv {
   readonly VITE_PRIVY_APP_ID: string
   readonly VITE_PINATA_JWT: string
   readonly VITE_GATEWAY_URL: string
-  readonly VITE_RPC_PROVIDER_URL: string
-  readonly VITE_PAYMASTER_SERVICE_URL: string
-  readonly VITE_PAYMASTER_PROXY_URL: string
   readonly VITE_BUNDLER_PROXY_URL: string
   readonly VITE_PIMLICO_RPC_URL: string
 

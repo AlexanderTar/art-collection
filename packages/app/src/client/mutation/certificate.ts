@@ -75,7 +75,7 @@ function useWriteContract() {
           ],
           capabilities: {
             paymasterService: {
-              url: import.meta.env.VITE_PAYMASTER_PROXY_URL,
+              url: import.meta.env.VITE_BUNDLER_PROXY_URL,
             },
           },
         })
