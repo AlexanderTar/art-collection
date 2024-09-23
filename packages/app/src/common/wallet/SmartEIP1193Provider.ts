@@ -75,8 +75,8 @@ export class SmartEIP1193Provider<
 
     return this.smartAccountClient.sendTransaction({
       calls: [{ to: tx.to, data: tx.data, value: tx.value }],
-      preVerificationGas: userOperation.preVerificationGas * 2n,
-      verificationGasLimit: userOperation.verificationGasLimit * 2n,
+      preVerificationGas: userOperation.preVerificationGas * 3n,
+      verificationGasLimit: userOperation.verificationGasLimit * 3n,
       maxFeePerGas: userOperation.maxFeePerGas,
       maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
     } as any)
